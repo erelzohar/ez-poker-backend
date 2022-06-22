@@ -2,38 +2,41 @@ const express = require("express");
 const uuid = require("uuid");
 const authLogic = require("../logic/auth-logic");
 const errorsHelper = require("../helpers/errors-helper");
-const PlayerModel = require("../models/PlayerModel");
+const UserModel = require("../models/UserModel");
 const router = express.Router();
 
 //http://localhost:3001/api/auth/register // POST
-router.post("/register", async (request, response) => {
+router.post("/register", async (req, res) => {
     try {
-        const playerToAdd = new PlayerModel(request.body);
+        const userToAdd = new UserModel(req.body);
 
-        playerToAdd.chipsCount = 0;
-        playerToAdd.uuid = uuid.v4();
-        playerToAdd.email = playerToAdd.email.toLowerCase();
-        
-        const joiErrors = playerToAdd.validateRegister();
-        if (joiErrors) return response.status(422).send(joiErrors);
+        userToAdd.chipsCount = 0;
+        userToAdd.uuid = uuid.v4();
+        userToAdd.email = userToAdd.email.toLowerCase();
 
-        const addedPlayer = await authLogic.registerAsync(playerToAdd);
-        response.status(201).json(addedPlayer);
+        const joiErrors = userToAdd.validateRegister();
+        if (joiErrors) return res.status(422).send(joiErrors);
+
+        const addedUser = await authLogic.registerAsync(userToAdd);
+        res.status(201).json(addedUser);
     }
     catch (err) {
-        response.status(500).send(errorsHelper.getError(err));
+        res.status(500).send(errorsHelper.getError(err));
     }
 });
 
 //http://localhost:3001/api/auth/login // POST
-router.post("/login", async (request, response) => {
+router.post("/login", async (req, res) => {
     try {
-        const loggedInPlayer = await authLogic.loginAsync(request.body);
-        if (!loggedInPlayer) return response.status(401).send("Incorrect email or password.");
-        response.json(loggedInPlayer);
+        const loggedInUser = await authLogic.loginAsync(req.body);
+        if (!loggedInUser) {
+            res.status(401).json("Incorrect email or password");
+            return;
+        }
+        res.json(loggedInUser);
     }
     catch (err) {
-        response.status(500).send(errorsHelper.getError(err));
+        res.status(500).send(errorsHelper.getError(err.message));
     }
 });
 
